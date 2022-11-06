@@ -139,8 +139,13 @@ def parse_args():
                         default="demo/clas_data/train_list.txt",
                         required=False)
     parser.add_argument("--gen_label", type=str, default="labels/test.txt")
-    parser.add_argument("--out_dir", type=str, default="test")
+    parser.add_argument("--img_save_folder", type=str, default="test")
     parser.add_argument("--size", type=int, default=224)
+    parser.add_argument("--bg_num_per_word", type=int, default=5)
+    parser.add_argument("--threads", type=int, default=1)
+    parser.add_argument("--bg_img_dir", type=str, default="demo/ocr_rec/bg")
+    parser.add_argument("--font_dir", type=str, default="demo/ocr_rec/font")
+    parser.add_argument("--corpus_file", type=str, default="demo/ocr_rec/corpus.txt")
     parser.add_argument("--repeat_ratio", type=float, default=0.9)
     parser.add_argument("--compare_out", type=str, default="tmp/rm_repeat.txt")
     parser.add_argument("--use_big_model", type=bool, default=str2bool)
@@ -163,20 +168,17 @@ class PPEDA(PPAug):
         self.save_list = []
         model_config = args.model_config
         self.config = config.get_config(model_config, show=False)
+        print(self.config)
+        print("==================")
+        self.config = config.merge_gen_config(self.config, args.__dict__, "DataGen")
+        print(self.config)
         self.gen_num = args.gen_num
         self.gen_ratio = args.gen_ratio
         self.delimiter = self.config["DataGen"].get('delimiter', ' ')
         self.gen_label = args.gen_label
         self.gen_mode = args.gen_mode
-
-        self.config["DataGen"]["data_dir"] = args.ori_data_dir
-        self.config["DataGen"]["label_file"] = args.label_file
-        self.config["DataGen"]["gen_label"] = args.gen_label
-        self.config["DataGen"]["img_save_folder"] = args.out_dir
-        self.config["DataGen"]["gen_ratio"] = args.gen_ratio
-        self.config["DataGen"]["gen_num"] = args.gen_num
-        self.config["DataGen"]["size"] = args.size
         self.aug_type = args.ops
+
         self.compare_out = args.compare_out
         self.feature_thresh = args.repeat_ratio
         self.config["FeatureExtract"]["thresh"] = args.repeat_ratio

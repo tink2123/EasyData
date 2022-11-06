@@ -15,6 +15,7 @@
 import os
 import copy
 import argparse
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 import yaml
 
 from python.ppaug.utils import logger
@@ -170,6 +171,81 @@ def get_config(fname, overrides=None, show=True):
     # check_config(config)
     return config
 
+def load_config(file_path):
+    """
+    Load config from yml/yaml file.
+    Args:
+        file_path (str): Path of the config file to be loaded.
+    Returns: global config
+    """
+    _, ext = os.path.splitext(file_path)
+    assert ext in ['.yml', '.yaml'], "only support yaml files for now"
+    config = yaml.load(open(file_path, 'rb'), Loader=yaml.Loader)
+    return config
+
+def merge_gen_config(config, opts, field):
+    """
+    Merge config into global config.
+    Args:
+        config (dict): Config to be merged.
+    Returns: global config
+    """
+    for key, value in opts.items():
+        if "." not in key:
+            if isinstance(value, dict) and key in config[field]:
+                config[field][key].update(value)
+            else:
+                config[field][key] = value
+        else:
+            sub_keys = key.split('.')
+            assert (
+                sub_keys[0] in config[field]
+            ), "the sub_keys can only be one of global_config: {}, but get: " \
+               "{}, please check your running command".format(
+                config[field].keys(), sub_keys[0])
+            cur = config[field][sub_keys[0]]
+            for idx, sub_key in enumerate(sub_keys[1:]):
+                if idx == len(sub_keys) - 2:
+                    cur[sub_key] = value
+                else:
+                    cur = cur[sub_key]
+    return config
+
+class ArgsParser(ArgumentParser):
+    def __init__(self):
+        super(ArgsParser, self).__init__(
+            formatter_class=RawDescriptionHelpFormatter)
+        self.add_argument("-c", "--config", help="configuration file to use")
+        self.add_argument(
+            "-o", "--opt", nargs='+', help="set configuration options")
+        self.add_argument('-v',
+                            '--verbose',
+                            action='store_true',
+                            help='wheather print the config info')
+        self.add_argument('-m',
+                            '--model',
+                            type=str,
+                            default="ppeda",
+                            help='wheather mode to run')
+
+
+    def parse_args(self, argv=None):
+        args = super(ArgsParser, self).parse_args(argv)
+        assert args.config is not None, \
+            "Please specify --config=configure_file_path."
+        args.opt = self._parse_opt(args.opt)
+        return args
+
+    def _parse_opt(self, opts):
+        config = {}
+        if not opts:
+            return config
+        for s in opts:
+            s = s.strip()
+            k, v = s.split('=')
+            config[k] = yaml.load(v, Loader=yaml.Loader)
+        return config
+
 
 def parser():
     parser = argparse.ArgumentParser("ppaug script")
@@ -197,4 +273,8 @@ def parser():
 
 def parse_args():
     args = parser().parse_args()
+    assert args.config is not None, \
+        "Please specify --config=configure_file_path."
+    args.opt = self._parse_opt(args.opt)
+    return args
     return args
