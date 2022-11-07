@@ -1,5 +1,4 @@
 DataGen:
-  mode: aug
   ops:
     - randaugment
     - random_erasing
@@ -7,7 +6,7 @@ DataGen:
     - tia_distort
     - tia_stretch
     - tia_perspective
-  data_dir: "demo/ocr_data"
+  ori_data_dir: "demo/ocr_data"
   label_file: "demo/ocr_data/train_list.txt"
   gen_label: &gen_label labels/all_label.txt
   model_type: &model_type ocr_rec

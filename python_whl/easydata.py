@@ -24,11 +24,20 @@ from ppcv.engine.pipeline import Pipeline
 from utils.utils import load_yaml
 from python.ppaug import PPAug
 from python.ppaug.utils import config
+from python.ppaug.gen_ocr_rec import GenOCR
 
 __all__ = ['EasyData']
 
 VERSION = '0.5.0.1'
 
+PPEDA_CONFIG = {
+        'img2img': {
+            'config': 'deploy/configs/ppeda_clas.yaml'
+        },
+        'text2img':{
+            'config': 'deploy/configs/ppeda_ocr_rec.yaml'
+        }
+}
 
 class LoopDict(dict):
     def __init__(self, *args, **kwargs):
@@ -150,9 +159,11 @@ def parse_args():
     )
 
     # PPEDA args
-    parser.add_argument("--gen_mode", type=str, default="aug")
+    parser.add_argument("--gen_mode", type=str, default="img2img")
     parser.add_argument("--gen_num", type=int, default=10)
     parser.add_argument("--gen_ratio", type=float, default=0)
+
+    # params for aug
     parser.add_argument("--ops",
                         type=list,
                         default=[
@@ -170,8 +181,21 @@ def parse_args():
     parser.add_argument("--gen_label", type=str, default="labels/test.txt")
     parser.add_argument("--out_dir", type=str, default="test")
     parser.add_argument("--size", type=int, default=224)
+
+    # params for ocr_rec
+    parser.add_argument("--bg_num_per_word", type=int, default=5)
+    parser.add_argument("--threads", type=int, default=1)
+    parser.add_argument("--bg_img_dir", type=str, default="demo/ocr_rec/bg")
+    parser.add_argument("--font_dir", type=str, default="demo/ocr_rec/font")
+    parser.add_argument("--corpus_file", type=str, default="demo/ocr_rec/corpus.txt")
+
+    parser.add_argument("--delimiter", type=str, default="\t")
+
+    # FeatureExtract args
     parser.add_argument("--repeat_ratio", type=float, default=0.9)
     parser.add_argument("--compare_out", type=str, default="tmp/rm_repeat.txt")
+
+    # BigModel args
     parser.add_argument("--use_big_model", type=bool, default=str2bool)
     parser.add_argument("--quality_ratio", type=float, default=0.4)
     parser.add_argument("--final_label",
@@ -180,8 +204,9 @@ def parse_args():
     parser.add_argument("--model_type", type=str, default="cls")
     parser.add_argument("--model_config",
                         type=str,
-                        default="deploy/configs/ppeda_clas.yaml")
+                        default=None)
     return parser.parse_args()
+
 
 
 class PPEDA(PPAug):
@@ -190,25 +215,30 @@ class PPEDA(PPAug):
         args = parse_args()
         args.__dict__.update(**kwargs)
         self.save_list = []
-        model_config = args.model_config
+        model_config = PPEDA_CONFIG[args.gen_mode]['config']
         self.config = config.get_config(model_config, show=False)
+        self.config = config.merge_gen_config(self.config, args.__dict__, "DataGen")
+        if args.gen_mode == "text2img":
+            self.gen_ocr = GenOCR(self.config["DataGen"]["config"])
+            self.bg_img_dir = args.bg_img_dir
+            self.font_dir = args.font_dir
+            self.corpus_file = args.corpus_file
+            self.output_dir = args.out_dir
+            self.bg_img_per_word_num = args.bg_num_per_word
+            self.threads = args.threads
+            self.delimiter = args.delimiter
         self.gen_num = args.gen_num
         self.gen_ratio = args.gen_ratio
         self.delimiter = self.config["DataGen"].get('delimiter', ' ')
         self.gen_label = args.gen_label
         self.gen_mode = args.gen_mode
-
-        self.config["DataGen"]["data_dir"] = args.ori_data_dir
-        self.config["DataGen"]["label_file"] = args.label_file
-        self.config["DataGen"]["gen_label"] = args.gen_label
-        self.config["DataGen"]["img_save_folder"] = args.out_dir
-        self.config["DataGen"]["gen_ratio"] = args.gen_ratio
-        self.config["DataGen"]["gen_num"] = args.gen_num
-        self.config["DataGen"]["size"] = args.size
-        self.aug_type = args.ops
+        
         self.compare_out = args.compare_out
         self.feature_thresh = args.repeat_ratio
+
         self.config["FeatureExtract"]["thresh"] = args.repeat_ratio
+        self.config["IndexProcess"]["all_label_file"] = args.gen_label
+        self.config["IndexProcess"]["image_root"] = args.out_dir
 
         if not os.path.exists("tmp"):
             os.makedirs("tmp")

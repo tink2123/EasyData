@@ -94,7 +94,7 @@ class GenAug(object):
         self.gen_num = config["gen_num"]
         self.img_list = get_image_file_list(config["label_file"])
 
-        self.imgs_dir = config["data_dir"]
+        self.imgs_dir = config["ori_data_dir"]
 
         if not os.path.exists(config["img_save_folder"] + "/" + self.ops):
             os.makedirs(config["img_save_folder"] + "/" + self.ops)

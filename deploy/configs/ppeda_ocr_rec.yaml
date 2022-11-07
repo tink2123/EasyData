@@ -1,5 +1,5 @@
 DataGen:
-  mode: ocr
+  mode: text2img
   config: "deploy/configs/ppeda/ocr_rec_gen.yaml"
   gen_num: 5
   out_dir: "test"

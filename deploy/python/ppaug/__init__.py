@@ -48,10 +48,10 @@ class PPAug(object):
         self.gen_label = gen_params["gen_label"]
         self.gen_mode = gen_params.get('mode', 'aug').lower()
         assert self.gen_mode in [
-            "ocr", "aug"
-        ], 'param lang must in {}, but got {}'.format(["ocr", "aug"],
+            "img2img", "text2img"
+        ], 'param lang must in {}, but got {}'.format(["img2img", "text2img"],
                                                       self.gen_mode)
-        if self.gen_mode == "ocr":
+        if self.gen_mode == "text2img":
             self.bg_img_per_word_num = gen_params["bg_num_per_word"]
             self.threads = gen_params["threads"]
             self.bg_img_dir = gen_params["bg_img_dir"]
@@ -59,10 +59,9 @@ class PPAug(object):
             self.corpus_file = gen_params["corpus_file"]
             self.gen_ocr = GenOCR(gen_params["config"])
             self.delimiter = gen_params.get('delimiter', '\t')
-        elif self.gen_mode == "aug":
+        elif self.gen_mode == "img2img":
             self.gen_ratio = gen_params["gen_ratio"]
             self.delimiter = gen_params.get('delimiter', ' ')
-            self.check_dir(self.gen_label)
             self.ori_label = gen_params["label_file"]
             self.aug_type = gen_params["ops"]
 
@@ -77,11 +76,11 @@ class PPAug(object):
         if "BigModel" in self.config:
             self.score_thresh = self.config["BigModel"]["thresh"]
             self.big_model_out = self.config["BigModel"]["final_label"]
-            self.model_type = self.config["BigModel"]["model_type"]
-            assert self.model_type in [
+            self.filter_type = self.config["BigModel"]["filter_type"]
+            assert self.filter_type in [
                 "ocr_rec", "cls"
             ], 'param lang must in {}, but got {}'.format(["ocr_rec", "cls"],
-                                                          self.model_type)
+                                                          self.filter_type)
             FLAGS = argparse.Namespace(
                 **{"config": self.config["BigModel"]["config"]})
             big_model = Pipeline(FLAGS)
@@ -170,8 +169,9 @@ class PPAug(object):
     def run(self):
         # gen aug data
         logger.info('{}Start Gen Img{}'.format('*' * 10, '*' * 10))
+        self.check_dir(self.gen_label)
 
-        if self.gen_mode == "ocr":
+        if self.gen_mode == "text2img":
             self.gen_ocr(self.bg_img_dir, self.font_dir, self.corpus_file,
                          self.gen_num, self.output_dir,
                          self.bg_img_per_word_num, self.threads,
@@ -265,7 +265,7 @@ class PPAug(object):
                     batch_results = big_model.predict_images(batch_names)
 
                     for number, result_dict in enumerate(batch_results):
-                        if self.model_type == "cls":
+                        if self.filter_type == "cls":
                             filename = batch_names[number]
                             scores_str = "[{}]".format(", ".join(
                                 "{:.2f}".format(r)
@@ -274,7 +274,7 @@ class PPAug(object):
                                 save_file.write("{}{}{}\n".format(
                                     filename, self.delimiter,
                                     batch_labels[number]))
-                        elif self.model_type == "ocr_rec":
+                        elif self.filter_type == "ocr_rec":
                             filename = batch_names[number]
                             scores = result_dict["rec_score"]
                             if scores > self.score_thresh:

@@ -110,23 +110,29 @@ ppeda.predict()
 <a name="3"></a>
 
 ## 3. 参数说明
-| 字段 | 说明 | 默认值 |
-|---|---|---|
-| model | 使用的模型工具，可选ppeda,ppldi | ppeda |
-| model_type | 使用的场景模型类型，可选cls,ocr_rec | cls |
-| model_config | 使用的场景模型配置 | deploy/configs/ppeda_clas.yaml |
-| ori_data_dir | 原始数据目录 | None |
-| label_file | 原始数据标签 | None |
-| gen_label | 增广后的数据标签 | labels/test.txt |
-| img_save_folder | 增广后的图像存储目录 | test |
-| size | 输出图像尺寸 | 224 |
-| gen_num | 每种增广生成的图像数量 | 10 |
-| gen_ratio | 使用原始数据的数量比例，优先级低于gen_num；如果gen_num大于原始数据量，该参数生效 | 0 |
-| ops | 使用的增广op | "randaugment", "random_erasing", "gridmask", "tia_distort", "tia_stretch", "tia_perspective" |
-| repeat_ratio | 图像去重的阈值，图像相似度得分大于该阈值会被剔除 | 0.9 |
-| compare_out | 去重过滤生成的中间结果 | tmp/rm_repeat.txt |
-| quality_ratio | 低质过滤的阈值，图像质量得分低于该阈值会被剔除 | 0.2 |
-| final_label | 最终生成的有效数据标签 | high_socre_label.txt |
+| 字段 | 任务类型 |说明 | 默认值 |
+|---|---|---|---|
+| model | 通用 |使用的模型工具，可选ppeda,ppldi | ppeda |
+| gen_mode | 数据生成 | 数据生成类型，可选 aug，ocr_rec | aug |
+| model_type | 数据生成 | 场景模型类型，可选 cls, ocr_rec | cls |
+| model_config | 数据生成 | 使用的场景模型配置 | deploy/configs/ppeda_clas.yaml |
+| ori_data_dir | 数据生成 | 原始数据目录 | None |
+| label_file | 数据生成 | 原始数据标签 | None |
+| gen_label | 数据生成 | 增广后的数据标签 | labels/test.txt |
+| img_save_folder | 数据生成 | 增广图像存储目录 | test |
+| size | 数据生成 | 输出图像尺寸 | 224 |
+| gen_num | 数据生成 | 每类增广数量 | 10 |
+| gen_ratio | 数据生成 | 每类增广倍数，优先级低于gen_num；如果gen_num大于原始数据量，该参数生效 | 0 |
+| ops | 数据生成 | 增广op | "randaugment", "random_erasing", "gridmask", "tia_distort", "tia_stretch", "tia_perspective" |
+| bg_num_per_word | 数据生成 | 每条OCR语料选择几张背景图 | 5 |
+| bg_img_dir | 数据生成 | 文本图像生成背景图目录 | demo/ocr_rec/bg |
+| font_dir | 数据生成 | 文本图像生成字体目录 | demo/ocr_rec/font |
+| corpus_file | 数据生成 | 文本图像生成语料路径 | demo/ocr_rec/corpus.txt |
+| threads | 数据生成 | 文本图像线程数 | 1 |
+| repeat_ratio | 数据去重 | 图像去重的阈值，图像相似度得分大于该阈值会被剔除 | 0.9 |
+| compare_out | 数据去重 | 去重过滤的中间结果 | tmp/rm_repeat.txt |
+| quality_ratio | 低质过滤 | 低质过滤的阈值，图像质量得分低于该阈值会被剔除 | 0.2 |
+| final_label | 低质过滤 | 最终生成的有效数据标签 | high_socre_label.txt |
 
 
 <a name="4"></a>

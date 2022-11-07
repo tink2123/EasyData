@@ -168,7 +168,7 @@ class GenOCR(object):
                 img_save_path = "{}/{}_{}".format(cur_thread_img_save_folder,
                                                   count, file_name)
                 label_file.write("{}/{}_{}{}{}\n".format(
-                    save_number, count, file_name, delimiter, word_list[0]))
+                    save_number, count, file_name, delimiter, word))
                 cv2.imwrite(img_save_path, out[:, :, ::-1])
                 label_file.flush()
                 count += 1
@@ -182,7 +182,8 @@ class GenOCR(object):
                  img_count=10,
                  img_save_folder="output",
                  bg_img_per_word_num=5,
-                 threads=5):
+                 threads=5,
+                 delimiter="\t"):
         with open(corpus_file, "r", encoding="utf-8") as f:
             word_list = []
             for lines in f.readlines():
@@ -201,7 +202,7 @@ class GenOCR(object):
                 self.gen_ocr_img,
                 args=(thread_word_list[part_id], label_filename, part_id,
                       bg_img_dir, font_dir, thread_count_list[part_id],
-                      bg_img_per_word_num, img_save_folder))
+                      bg_img_per_word_num, img_save_folder,delimiter))
 
         print('Waiting for all subprocesses done...')
         process_pool.close()

@@ -6,7 +6,7 @@ DataGen:
     - tia_distort
     - tia_stretch
     - tia_perspective
-  data_dir: "demo/clas_data"
+  ori_data_dir: "demo/clas_data"
   label_file: "demo/clas_data/train_list.txt"
   gen_label: &gen_label "labels/test.txt"
   img_save_folder: "test"

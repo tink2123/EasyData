@@ -156,6 +156,33 @@ def override_config(config, options=None):
             override(config, keys, value)
     return config
 
+def merge_gen_config(config, opts, field):
+    """
+    Merge config into global config.
+    Args:
+        config (dict): Config to be merged.
+    Returns: global config
+    """
+    for key, value in opts.items():
+        if "." not in key:
+            if isinstance(value, dict) and key in config[field]:
+                config[field][key].update(value)
+            else:
+                config[field][key] = value
+        else:
+            sub_keys = key.split('.')
+            assert (
+                sub_keys[0] in config[field]
+            ), "the sub_keys can only be one of global_config: {}, but get: " \
+               "{}, please check your running command".format(
+                config[field].keys(), sub_keys[0])
+            cur = config[field][sub_keys[0]]
+            for idx, sub_key in enumerate(sub_keys[1:]):
+                if idx == len(sub_keys) - 2:
+                    cur[sub_key] = value
+                else:
+                    cur = cur[sub_key]
+    return config
 
 def get_config(fname, overrides=None, show=True):
     """
